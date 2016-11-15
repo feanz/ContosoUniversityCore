@@ -28,6 +28,12 @@
     "Microsoft.Extensions.Options.ConfigurationExtensions": "1.0.0",
     "Microsoft.VisualStudio.Web.BrowserLink.Loader": "14.0.0",
     "Scrutor": "1.10.0",
+    "Serilog": "2.3.0",
+    "Serilog.Extensions.Logging": "1.2.0",
+    "Serilog.Sinks.ColoredConsole": "2.0.0",
+    "Serilog.Sinks.Literate": "2.1.0-dev-00034",
+    "Serilog.Sinks.RollingFile": "3.2.0",
+    "Serilog.Sinks.Seq": "3.1.2-dev-00100",
     "StructureMap.Microsoft.DependencyInjection": "1.2.0",
     "X.PagedList": "5.3.0.5300"
   },

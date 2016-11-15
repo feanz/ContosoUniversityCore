@@ -54,9 +54,9 @@
                 _db = db;
             }
 
-            public async Task<Command> Handle(Query message)
+            public Task<Command> Handle(Query message)
             {
-                return await _db.Students
+                return _db.Students
                     .Where(s => s.Id == message.Id)
                     .ProjectToSingleOrDefaultAsync<Command>();
             }

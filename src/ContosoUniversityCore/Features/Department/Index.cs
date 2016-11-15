@@ -37,9 +37,9 @@
                 _context = context;
             }
 
-            public async Task<List<Model>> Handle(Query message)
+            public Task<List<Model>> Handle(Query message)
             {
-                return await _context.Departments
+                return _context.Departments
                   .ProjectToListAsync<Model>();
             }
         }
