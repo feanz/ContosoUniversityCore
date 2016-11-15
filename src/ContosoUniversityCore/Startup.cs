@@ -1,5 +1,8 @@
 ﻿namespace ContosoUniversityCore
 {
+    using System;
+    using System.Linq;
+    using System.Reflection;
     using AutoMapper;
     using FluentValidation.AspNetCore;
     using HtmlTags;
@@ -11,6 +14,7 @@
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
+    using StructureMap;
 
     public class Startup
     {
@@ -27,7 +31,7 @@
         public IConfigurationRoot Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public IServiceProvider ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
             services.AddMvc(opt =>
@@ -50,15 +54,47 @@
                     options.ViewLocationFormats.Add("/Features/Shared/{0}.cshtml");
                     options.ViewLocationExpanders.Add(new FeatureViewLocationExpander());
                 })
+                .AddControllersAsServices()
                 .AddFluentValidation(cfg => { cfg.RegisterValidatorsFromAssemblyContaining<Startup>(); });
 
+            services.AddHtmlTags(new TagConventions());
             services.AddAutoMapper(typeof(Startup));
 
             Mapper.AssertConfigurationIsValid();
+            
+            return ConfigureIoC(services);
+        }
 
-            services.AddMediatR(typeof(Startup));
-            services.AddScoped(_ => new SchoolContext(Configuration["Data:DefaultConnection:ConnectionString"]));
-            services.AddHtmlTags(new TagConventions());
+        public IServiceProvider ConfigureIoC(IServiceCollection services)
+        {
+            var container = new Container();
+
+            container.Configure(config =>
+            {
+                config.Scan(_ =>
+                {
+                    _.AssemblyContainingType<Startup>();
+                    _.WithDefaultConventions();
+                    _.ConnectImplementationsToTypesClosing(typeof(IRequestHandler<,>));
+                    _.ConnectImplementationsToTypesClosing(typeof(IAsyncRequestHandler<,>));
+                    _.ConnectImplementationsToTypesClosing(typeof(INotificationHandler<>));
+                    _.ConnectImplementationsToTypesClosing(typeof(IAsyncNotificationHandler<>)); 
+                });
+
+                config.For<SingleInstanceFactory>().Use<SingleInstanceFactory>(ctx => t => ctx.GetInstance(t));
+                config.For<MultiInstanceFactory>().Use<MultiInstanceFactory>(ctx => t => ctx.GetAllInstances(t));
+                config.For<IMediator>().Use<Mediator>();
+                config.For<SchoolContext>().Use(_ => new SchoolContext(Configuration["Data:DefaultConnection:ConnectionString"]));
+
+                var handlerType = config.For(typeof(IAsyncRequestHandler<,>));
+
+                handlerType.DecorateAllWith(typeof(MediatorPipeline<,>));
+
+                //Populate the container using the service collection
+                config.Populate(services);
+            });
+
+            return container.GetInstance<IServiceProvider>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

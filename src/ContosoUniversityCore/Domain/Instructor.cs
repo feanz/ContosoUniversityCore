@@ -9,12 +9,11 @@ namespace ContosoUniversityCore.Domain
 
     public class Instructor : Person
     {
-        public DateTime HireDate { get; private set; }
+        public DateTime HireDate { get; set; }
 
-        public virtual ICollection<CourseInstructor> CourseInstructors
-            { get; private set; } = new List<CourseInstructor>();
+        public virtual ICollection<CourseInstructor> CourseInstructors { get; private set; } = new List<CourseInstructor>();
 
-        public virtual OfficeAssignment OfficeAssignment { get; private set; }
+        public virtual OfficeAssignment OfficeAssignment { get; set; }
 
         public void Handle(CreateEdit.Command message, 
             IEnumerable<Course> courses)
